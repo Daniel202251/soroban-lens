@@ -6,10 +6,12 @@ interface Props {
   event: LensEvent;
   showContract: boolean;
   onTopicClick: (topic: string) => void;
+  selected: boolean;
+  onToggleSelect: (id: string) => void;
 }
 
 /** One table row, expanding in place to show the full decoded payload. */
-export function EventRow({ event, showContract, onTopicClick }: Props): React.JSX.Element {
+export function EventRow({ event, showContract, onTopicClick, selected, onToggleSelect }: Props): React.JSX.Element {
   const [expanded, setExpanded] = useState(false);
   const firstTopic = event.topics[0];
   const topicLabel = firstTopic ? summarise(firstTopic) : '—';
@@ -21,6 +23,15 @@ export function EventRow({ event, showContract, onTopicClick }: Props): React.JS
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
       >
+        <td className="col-select" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={() => onToggleSelect(event.id)}
+            aria-label={`Select event at ledger ${event.ledger} to compare`}
+            title="Select to compare"
+          />
+        </td>
         <td className="col-toggle" aria-hidden="true">{expanded ? '▾' : '▸'}</td>
         <td className="col-ledger">
           <span className="mono">{event.ledger}</span>
@@ -69,7 +80,7 @@ export function EventRow({ event, showContract, onTopicClick }: Props): React.JS
 
       {expanded && (
         <tr className="detail-row">
-          <td colSpan={showContract ? 6 : 5}>
+          <td colSpan={showContract ? 7 : 6}>
             <div className="detail">
               {!event.inSuccessfulContractCall && (
                 <p className="warning">
