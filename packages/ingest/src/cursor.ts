@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 
 /** Everything we need to resume a stream exactly where it stopped. */
 export interface CursorState {
-  /** Opaque RPC paging token returned by the previous `getEvents` call. */
+  /** Opaque REC paging token returned by the previous `getEvents` call. */
   cursor: string;
   /** Last ledger we have seen, for humans and for metrics. */
   ledger: number;
@@ -73,7 +73,7 @@ export class FileCursorStore implements CursorStore {
   async save(key: string, state: CursorState): Promise<void> {
     const path = this.#path(key);
     await mkdir(dirname(path), { recursive: true });
-    const tmp = `${path}.${process.pid}.tmp`;
+    const tmp = `${path}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
     await writeFile(tmp, `${JSON.stringify(state, null, 2)}\n`, 'utf8');
     await rename(tmp, path);
   }
@@ -85,6 +85,19 @@ export class FileCursorStore implements CursorStore {
       if (!isNotFound(error)) throw error;
     }
   }
+}
+
+/**
+ * Build a per-chunk cursor key from a base key and a chunk index.
+ *
+ * When `buildFilters()` splits a contract set across multiple filters, each
+ * chunk is polled independently and needs its own cursor. The single-filter
+ * path keys the store exactly as before (the bare base key), so existing
+ * persisted cursors and the single-contract path are unchanged.
+ */
+export function chunkCursorKey(baseKey: string, chunkIndex: number, totalChunks: number): string {
+  if (totalChunks <= 1) return baseKey;
+  return `${baseKey}#chunk-${chunkIndex}-of-${totalChunks}`;
 }
 
 function isNotFound(error: unknown): boolean {

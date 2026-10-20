@@ -12,12 +12,20 @@ export type {
   RetentionState,
   TopicSegment,
   EventType,
+  ChunkCursor,
+  ChunkState,
 } from './types.js';
 
 export { LensRpcClient, buildFilters, MAX_PAGE_SIZE, MAX_CONTRACT_IDS_PER_FILTER } from './rpc-client.js';
-export type { RpcClientOptions, GetEventsArgs } from './rpc-client.js';
+export type { RpcClientOptions, GetEventsArgs, GetEventsChunkedArgs, ChunkedEventBatch } from './rpc-client.js';
 
-export { EventPoller, defaultCursorKey, ingestionLag, APPROX_LEDGER_SECONDS } from './poller.js';
+export {
+  EventPoller,
+  defaultCursorKey,
+  ingestionLag,
+  APPROX_LEDGER_SECONDS,
+  DEFAULT_CHUNK_CONCURRENCY,
+} from './poller.js';
 export type { PollerDeps, PollerProgress } from './poller.js';
 
 export {
@@ -28,7 +36,7 @@ export {
 } from './clock-skew.js';
 export type { ClockSkew } from './clock-skew.js';
 
-export { FileCursorStore, MemoryCursorStore } from './cursor.js';
+export { FileCursorStore, MemoryCursorStore, chunkCursorKey } from './cursor.js';
 export type { CursorStore, CursorState } from './cursor.js';
 
 export { NETWORKS, resolveNetwork, isNetworkName } from './networks.js';
@@ -53,4 +61,5 @@ export {
 export type { RetryOptions } from './retry.js';
 
 export { IngestMetrics } from './metrics.js';
+
 export { startMetricsServer, closeMetricsServer, parseMetricsPort } from './metrics-server.js';
