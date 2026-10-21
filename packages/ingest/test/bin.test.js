@@ -108,6 +108,27 @@ test('--end-ledger before --start-ledger is rejected', async () => {
   assert.match(stderr, /is before --start-ledger/);
 });
 
+// ── #130 numeric flag validation ────────────────────────────────────────────
+
+for (const [flag, outOfRange, flagArgs] of [
+  ['--start-ledger', '0'],
+  ['--end-ledger', '0'],
+  ['--page-size', '10001'],
+  ['--poll-interval', '-1', (value) => [`--poll-interval=${value}`]],
+  ['--max-events', '0'],
+]) {
+  test(`${flag} rejects non-numeric and out-of-range values before RPC`, async (t) => {
+    for (const [value, label] of [['abc', 'non-numeric'], [outOfRange, 'out-of-range']]) {
+      await t.test(label, async () => {
+        const args = flagArgs && label === 'out-of-range' ? flagArgs(value) : [flag, value];
+        const { code, stderr } = await cli(['-c', SAC, ...args]);
+        assert.equal(code, 2);
+        assert.match(stderr, new RegExp(flag));
+      });
+    }
+  });
+}
+
 // ── #6 retry tuning ──────────────────────────────────────────────────────────
 
 test('the retry flags and their env vars are documented in the help text', async () => {
