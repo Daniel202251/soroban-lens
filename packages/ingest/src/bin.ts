@@ -268,6 +268,19 @@ async function main(argv: string[]): Promise<number> {
   const dataDir = values['cursor-dir'] ?? process.env.LENS_DATA_DIR ?? './data';
   const cursors = values['no-resume'] ? new MemoryCursorStore() : new FileCursorStore(dataDir);
 
+  const abortController = new AbortController();
+  let shutdownRequested = false;
+  const handleSignal = (signal: NodeJS.Signals): void => {
+    if (shutdownRequested) process.exit(1);
+    shutdownRequested = true;
+    process.stderr.write(`[ingest] received ${signal}; finishing current batch\n`);
+    abortController.abort();
+  };
+  const onSigint = (): void => handleSignal('SIGINT');
+  const onSigterm = (): void => handleSignal('SIGTERM');
+  process.on('SIGINT', onSigint);
+  process.on('SIGTERM', onSigterm);
+
   const poller = new EventPoller(
     {
       contractIds,
@@ -282,6 +295,7 @@ async function main(argv: string[]): Promise<number> {
       client,
       cursors,
       metrics,
+      signal: abortController.signal,
       log: (m) => process.stderr.write(`[ingest] ${m}\n`),
     },
   );
@@ -324,6 +338,9 @@ async function main(argv: string[]): Promise<number> {
     return 0;
   } finally {
     if (metricsServer) await closeMetricsServer(metricsServer);
+    if (shutdownRequested) process.stderr.write('[ingest] shutdown complete\n');
+    process.off('SIGINT', onSigint);
+    process.off('SIGTERM', onSigterm);
   }
 }
 
