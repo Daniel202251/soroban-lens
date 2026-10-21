@@ -9,6 +9,8 @@ export class IngestMetrics {
   #ledger = 0;
   #latest = 0;
   #ready = false;
+  #lastPageFetchedAt: number | undefined;
+  #rpcAvailable = true;
   #durations = new Map<RpcMethod, Histogram>();
   #errors = new Map<string, number>();
 
@@ -37,6 +39,15 @@ export class IngestMetrics {
 
   eventsIngested(count: number): void { this.#events += count; }
   cursorRestarted(): void { this.#restarts++; }
+  pageFetched(now = performance.now()): void {
+    this.#lastPageFetchedAt = now;
+    this.#rpcAvailable = true;
+  }
+  rpcExhausted(): void { this.#rpcAvailable = false; }
+  isReady(maxAgeMs: number, now = performance.now()): boolean {
+    return this.#rpcAvailable && this.#lastPageFetchedAt !== undefined &&
+      now - this.#lastPageFetchedAt <= maxAgeMs;
+  }
   progress(ledger: number, latestLedger: number): void {
     this.#ledger = ledger;
     this.#latest = latestLedger;

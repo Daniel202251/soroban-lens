@@ -1,7 +1,7 @@
 import { buildFilters, MAX_PAGE_SIZE, type LensRpcClient } from './rpc-client.js';
 import { assertContractIds } from './contract-id.js';
 import { MemoryCursorStore, type CursorStore } from './cursor.js';
-import { sleep as defaultSleep } from './retry.js';
+import { RetryExhaustedError, sleep as defaultSleep } from './retry.js';
 import type { EventBatch, PollerOptions } from './types.js';
 import type { IngestMetrics } from './metrics.js';
 
@@ -133,11 +133,17 @@ export class EventPoller {
     const seen = new RecentIds(pageSize * RECENT_ID_WINDOW_PAGES);
 
     const endLedger = this.#options.endLedger;
-    let { cursor, startLedger } = await this.#resolveStart();
+    let cursor: string | undefined;
+    let startLedger: number | undefined;
+    let positionResolved = false;
 
     while (!this.#signal?.aborted) {
       let batch: EventBatch;
       try {
+        if (!positionResolved) {
+          ({ cursor, startLedger } = await this.#resolveStart());
+          positionResolved = true;
+        }
         batch = await this.#client.getEvents({
           filters,
           limit: pageSize,
@@ -160,8 +166,16 @@ export class EventPoller {
           startLedger = oldestLedger;
           continue;
         }
+        if (error instanceof RetryExhaustedError) {
+          this.#metrics?.rpcExhausted();
+          this.#log(`RPC unavailable after ${error.attempts} attempts: ${error.message}`);
+          await this.#sleep(idleMs);
+          continue;
+        }
         throw error;
       }
+
+      this.#metrics?.pageFetched();
 
       // caughtUp reflects what the RPC returned, not what survived dedup: a
       // full page of repeats still means there is more history to walk.

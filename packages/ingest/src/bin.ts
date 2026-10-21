@@ -316,6 +316,7 @@ async function main(argv: string[]): Promise<number> {
 
   const metricsServer = port === undefined ? undefined : await startMetricsServer(
     metrics, port, values['metrics-host'] ?? process.env.LENS_METRICS_HOST ?? '127.0.0.1',
+    Math.max((pollInterval ?? 2000) * 3, 1000),
   );
   try {
     for await (const batch of poller.stream()) {
