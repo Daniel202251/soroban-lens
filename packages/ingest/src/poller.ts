@@ -31,6 +31,8 @@ export const APPROX_LEDGER_SECONDS = 5;
 export const DEFAULT_POLL_INTERVAL_MS = 2000;
 export const DEFAULT_MAX_POLL_INTERVAL_MS = 30_000;
 export const DEFAULT_STALLED_THRESHOLD_MS = 60_000;
+/** Filter chunks polled at once when contracts span several RPC filters. */
+export const DEFAULT_CHUNK_CONCURRENCY = 4;
 
 /** Emitted alongside batches so callers can show progress without extra RPC calls. */
 export interface PollerProgress {
