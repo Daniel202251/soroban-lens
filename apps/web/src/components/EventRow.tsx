@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { LensEvent } from '../types.js';
 import { absoluteTime, prettyJson, relativeTime, summarise, summariseTyped, topicPath, truncate } from '../format.js';
 import { useLocale } from '../i18n/index.js';
@@ -11,6 +10,8 @@ const ADDRESS_ID = /^[GC][A-Z2-7]{55}$/;
 interface Props {
   event: LensEvent;
   network: string;
+  expanded: boolean;
+  onToggleExpanded: (eventId: string) => void;
   showContract: boolean;
   onTopicClick: (topic: string) => void;
   selected: boolean;
@@ -20,9 +21,10 @@ interface Props {
 }
 
 /** One table row, expanding in place to show the full decoded payload. */
-export function EventRow({ event, network, showContract, onTopicClick, selected, onToggleSelect, absolute }: Props): React.JSX.Element {
+export function EventRow({
+  event, network, expanded, onToggleExpanded, showContract, onTopicClick, selected, onToggleSelect, absolute,
+}: Props): React.JSX.Element {
   const { t } = useLocale();
-  const [expanded, setExpanded] = useState(false);
   const firstTopic = event.topics[0];
   const topicLabel = firstTopic ? summarise(firstTopic) : '—';
 
@@ -45,7 +47,7 @@ export function EventRow({ event, network, showContract, onTopicClick, selected,
             type="button"
             aria-label={expanded ? 'Collapse event details' : 'Expand event details'}
             aria-expanded={expanded}
-            onClick={() => setExpanded((v) => !v)}
+            onClick={() => onToggleExpanded(event.id)}
           >
             {expanded ? '▾' : '▸'}
           </button>

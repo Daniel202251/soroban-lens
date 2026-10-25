@@ -85,6 +85,7 @@ function AppInner(): React.JSX.Element {
   }, [setFiltersRaw]);
 
   const [events, setEvents] = useState<LensEvent[]>([]);
+  const [expandedEventIds, setExpandedEventIds] = useState<Set<string>>(() => new Set());
   const [total, setTotal] = useState(0);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [health, setHealth] = useState<Health | null>(null);
@@ -247,6 +248,18 @@ function AppInner(): React.JSX.Element {
       setLoadingMore(false);
     }
   }, [selected.baseUrl, query, nextCursor, loadingMore]);
+
+  const toggleEventExpanded = useCallback((eventId: string) => {
+    setExpandedEventIds((current) => {
+      const next = new Set(current);
+      if (next.has(eventId)) {
+        next.delete(eventId);
+      } else {
+        next.add(eventId);
+      }
+      return next;
+    });
+  }, []);
 
   // When the query or network changes, fetch fresh data but keep the old rows
   // on screen until the new ones arrive.
@@ -533,6 +546,8 @@ function AppInner(): React.JSX.Element {
         <EventTable
           events={events}
           network={selected.label}
+          expandedEventIds={expandedEventIds}
+          onToggleExpanded={toggleEventExpanded}
           showContract={showContract}
           loading={loading}
           selectedIds={selectedIdSet}
