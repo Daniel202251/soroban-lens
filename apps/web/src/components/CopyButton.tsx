@@ -56,7 +56,7 @@ export function CopyButton({ value, label }: Props): React.JSX.Element {
       >
         Copy
       </button>
-      <span className="copy-status" role="status" aria-live="polite">{status}</span>
+      <span className="copy-status" role="status">{status}</span>
     </span>
   );
 }
