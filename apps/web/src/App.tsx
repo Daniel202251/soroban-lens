@@ -532,6 +532,7 @@ function AppInner(): React.JSX.Element {
       <ErrorBoundary title="Event Table Error">
         <EventTable
           events={events}
+          network={selected.label}
           showContract={showContract}
           loading={loading}
           selectedIds={selectedIdSet}
