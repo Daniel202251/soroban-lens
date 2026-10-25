@@ -52,6 +52,8 @@ export {
   isContractId,
   assertContractIds,
   InvalidContractIdError,
+  ContractFileParseError,
+  loadContractIdsFromFile,
 } from './contract-id.js';
 
 export {
