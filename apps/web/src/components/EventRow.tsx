@@ -27,11 +27,32 @@ export function EventRow({
   const { t } = useLocale();
   const firstTopic = event.topics[0];
   const topicLabel = firstTopic ? summarise(firstTopic) : '—';
+  const onKeyDown = (keyEvent: React.KeyboardEvent<HTMLTableRowElement>): void => {
+    if (keyEvent.target !== keyEvent.currentTarget) return;
+
+    if (keyEvent.key === 'ArrowDown' || keyEvent.key === 'ArrowUp') {
+      keyEvent.preventDefault();
+      const rows = Array.from(
+        keyEvent.currentTarget.closest('tbody')?.querySelectorAll<HTMLTableRowElement>('.event-row') ?? [],
+      );
+      const index = rows.indexOf(keyEvent.currentTarget);
+      rows[index + (keyEvent.key === 'ArrowDown' ? 1 : -1)]?.focus();
+    } else if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
+      keyEvent.preventDefault();
+      onToggleExpanded(event.id);
+    } else if (keyEvent.key === 'Escape' && expanded) {
+      keyEvent.preventDefault();
+      onToggleExpanded(event.id);
+    }
+  };
 
   return (
     <>
       <tr
         className={`event-row${expanded ? ' is-expanded' : ''}${event.inSuccessfulContractCall ? '' : ' is-failed'}`}
+        onKeyDown={onKeyDown}
+        role="row"
+        tabIndex={0}
       >
         <td className="col-select" onClick={(e) => e.stopPropagation()}>
           <input
